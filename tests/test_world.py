@@ -89,7 +89,6 @@ def test_buildings(chinook):
         assert block_at(chunks, x0, BASE_Y, z0) in ("minecraft:stone_bricks", "minecraft:cracked_stone_bricks")
         assert block_at(chunks, x1, top, z1).endswith("_terracotta")
         assert block_at(chunks, x1, top + 1, z1) == "minecraft:air"
-        assert block_at(chunks, x0 + 1, BASE_Y, z0 + 1) == "minecraft:ladder"
         assert block_at(chunks, x0, GROUND_Y, z0) == "minecraft:polished_andesite"
 
         inside = [e for e in signs(chunks) if x0 < e["x"] < x1 and z0 < e["z"] < z1]
@@ -98,20 +97,38 @@ def test_buildings(chinook):
         assert outside, f"{b['table']} has no name sign at its door"
 
 
+def test_ladder_reaches_the_top_and_never_blocks_a_door(chinook):
+    _, city, _, _, _, chunks = chinook
+    for b in city["buildings"]:
+        x0, z0, x1, z1 = b["x"], b["z"], b["x"] + b["w"] - 1, b["z"] + b["d"] - 1
+        corners = [(x0 + 1, z0 + 1), (x1 - 1, z0 + 1), (x1 - 1, z1 - 1), (x0 + 1, z1 - 1)]
+        ladders = [c for c in corners if block_at(chunks, c[0], BASE_Y, c[1]) == "minecraft:ladder"]
+        assert len(ladders) == 1, b["table"]
+        lx, lz = ladders[0]
+        assert all(block_at(chunks, lx, y, lz) == "minecraft:ladder" for y in range(BASE_Y, BASE_Y + b["h"] - 1))
+        wall = [(x, z0) for x in range(x0, x1 + 1)] + [(x, z1) for x in range(x0, x1 + 1)]
+        wall += [(x0, z) for z in range(z0, z1 + 1)] + [(x1, z) for z in range(z0, z1 + 1)]
+        doors = [(x, z) for x, z in wall if block_at(chunks, x, BASE_Y, z) == "minecraft:air"]
+        assert doors, b["table"]
+        assert all(abs(x - lx) + abs(z - lz) > 1 for x, z in doors), f"ladder behind a door in {b['table']}"
+
+
 def test_doors_open_onto_roads(chinook):
     _, city, _, _, _, chunks = chinook
     buildings = {b["table"]: b for b in city["buildings"]}
     for road in city["roads"]:
         for table, (x, z) in ((road["from"], road["cells"][0]), (road["to"], road["cells"][-1])):
             b = buildings[table]
-            # step from the road end into the wall: the opening is two blocks high
+            # step from the road end into the wall; doors keep off the corners, so look two blocks either way
             wx = min(max(x, b["x"]), b["x"] + b["w"] - 1)
             wz = min(max(z, b["z"]), b["z"] + b["d"] - 1)
-            if (wx, wz) in {(b["x"], b["z"]), (b["x"] + b["w"] - 1, b["z"]), (b["x"], b["z"] + b["d"] - 1),
-                            (b["x"] + b["w"] - 1, b["z"] + b["d"] - 1)}:
-                continue  # corner: the door was moved one block along the wall
-            assert block_at(chunks, wx, BASE_Y, wz) == "minecraft:air", (table, wx, wz)
-            assert block_at(chunks, wx, BASE_Y + 1, wz) == "minecraft:air"
+            along = [(wx + i, wz) for i in range(-2, 3)] if wz in (b["z"], b["z"] + b["d"] - 1) else \
+                    [(wx, wz + i) for i in range(-2, 3)]
+            along = [(ax, az) for ax, az in along
+                     if b["x"] <= ax < b["x"] + b["w"] and b["z"] <= az < b["z"] + b["d"]]
+            openings = [c for c in along if all(
+                block_at(chunks, c[0], y, c[1]) == "minecraft:air" for y in (BASE_Y, BASE_Y + 1))]
+            assert openings, f"no door next to the {road['from']}->{road['to']} road at {table}"
 
 
 def test_roads_and_lamps(chinook):

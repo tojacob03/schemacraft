@@ -124,14 +124,17 @@ def build(model: dict, city: dict, name: str = "schemacraft") -> tuple[Blocks, t
 
 
 def _door_cell(b, outside):
-    """Wall cell next to a road end, moved off the corner so the door opens into the room."""
+    """Wall cell next to a road end, kept two blocks from the corners.
+
+    That keeps doors clear of the walls meeting at the corner and of the ladder in the inner corner.
+    """
     ox, oz = outside
     x0, z0, x1, z1 = b["x"], b["z"], b["x"] + b["w"] - 1, b["z"] + b["d"] - 1
     x, z = min(max(ox, x0), x1), min(max(oz, z0), z1)
     if z in (z0, z1):
-        x = min(max(x, x0 + 1), x1 - 1)
+        x = min(max(x, x0 + 2), x1 - 2)
     if x in (x0, x1):
-        z = min(max(z, z0 + 1), z1 - 1)
+        z = min(max(z, z0 + 2), z1 - 2)
     return x, z
 
 
