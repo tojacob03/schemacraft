@@ -47,6 +47,8 @@ class Blocks:
         self.sequence: list = []  # every op once, in order
         self.entities: dict = defaultdict(list)  # chunk -> [block entity]
         self.max_y = GROUND_Y
+        self.mobs: dict = defaultdict(list)  # chunk -> [entity NBT], e.g. item frames and text displays
+        self.maps: list = []  # 128x128 map colour tiles; the index is the map id
 
     def id(self, state: str) -> int:
         if state not in self._ids:

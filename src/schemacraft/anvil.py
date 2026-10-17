@@ -13,7 +13,7 @@ from pathlib import Path
 
 import nbtlib
 import numpy as np
-from nbtlib import Byte, Compound, Double, Float, Int, IntArray, List, Long, LongArray, String
+from nbtlib import Byte, ByteArray, Compound, Double, Float, Int, IntArray, List, Long, LongArray, String
 
 from schemacraft.blocks import BASE_Y, Blocks
 
@@ -24,7 +24,8 @@ SECTIONS = HEIGHT // 16
 SUPERFLAT = [("minecraft:bedrock", 1), ("minecraft:dirt", 2), ("minecraft:grass_block", 1)]
 
 
-def write_world(blocks: Blocks, path: Path, name: str, spawn: tuple[int, int, int], icon=None) -> Path:
+def write_world(blocks: Blocks, path: Path, name: str, spawn: tuple[int, int, int], icon=None, angle: float = 0) -> Path:
+    """angle: the direction the player looks at spawn (yaw: 0 south, 90 west, 180 north, 270 east)."""
     path = Path(path)
     (path / "region").mkdir(parents=True, exist_ok=False)
     base = _ground(blocks)
@@ -33,7 +34,27 @@ def write_world(blocks: Blocks, path: Path, name: str, spawn: tuple[int, int, in
         regions.setdefault((cx >> 5, cz >> 5), {})[(cx, cz)] = _chunk(blocks, cx, cz, base)
     for (rx, rz), chunks in regions.items():
         _write_region(path / "region" / f"r.{rx}.{rz}.mca", chunks)
-    _level_dat(name, spawn).save(path / "level.dat")
+
+    if blocks.mobs:  # since 1.17 entities live in their own region files
+        (path / "entities").mkdir()
+        regions = {}
+        for (cx, cz), entities in sorted(blocks.mobs.items()):
+            regions.setdefault((cx >> 5, cz >> 5), {})[(cx, cz)] = Compound({
+                "DataVersion": Int(DATA_VERSION),
+                "Position": IntArray([cx, cz]),
+                "Entities": List[Compound](entities),
+            })
+        for (rx, rz), chunks in regions.items():
+            _write_region(path / "entities" / f"r.{rx}.{rz}.mca", chunks)
+
+    if blocks.maps:
+        (path / "data").mkdir()
+        for i, tile in enumerate(blocks.maps):
+            _map_dat(tile).save(path / "data" / f"map_{i}.dat")
+        nbtlib.File({"DataVersion": Int(DATA_VERSION), "data": Compound({"map": Int(len(blocks.maps) - 1)})},
+                    gzipped=True).save(path / "data" / "idcounts.dat")
+
+    _level_dat(name, spawn, angle).save(path / "level.dat")
     if icon is not None:
         icon(path / "icon.png")
     return path
@@ -106,7 +127,21 @@ def _state(state: str) -> Compound:
     return out
 
 
+def _map_dat(tile: np.ndarray) -> nbtlib.File:
+    """A locked map showing a fixed 128x128 picture, laid out like the maps Arnis writes for 1.21.4."""
+    return nbtlib.File({
+        "DataVersion": Int(DATA_VERSION),
+        "data": Compound({
+            "xCenter": Int(0), "zCenter": Int(0), "scale": Byte(0), "dimension": String("minecraft:overworld"),
+            "locked": Byte(1), "trackingPosition": Byte(0), "unlimitedTracking": Byte(0),
+            "colors": ByteArray(tile.astype(np.uint8).ravel().view(np.int8)),
+        }),
+    }, gzipped=True)
+
+
 def _nbt(value):
+    if isinstance(value, nbtlib.tag.Base):
+        return value
     if isinstance(value, bool):
         return Byte(int(value))
     if isinstance(value, int):
@@ -138,7 +173,7 @@ def _write_region(path: Path, chunks: dict) -> None:
     path.write_bytes(bytes(header) + bytes(body))
 
 
-def _level_dat(name: str, spawn: tuple[int, int, int]) -> nbtlib.File:
+def _level_dat(name: str, spawn: tuple[int, int, int], angle: float = 0) -> nbtlib.File:
     x, y, z = spawn
     flat = Compound({
         "type": String("minecraft:flat"),
@@ -183,7 +218,7 @@ def _level_dat(name: str, spawn: tuple[int, int, int]) -> nbtlib.File:
         "allowCommands": Byte(1),
         "Difficulty": Byte(0), "DifficultyLocked": Byte(0), "hardcore": Byte(0),
         "initialized": Byte(1),
-        "SpawnX": Int(x), "SpawnY": Int(y if y is not None else BASE_Y), "SpawnZ": Int(z), "SpawnAngle": Float(0),
+        "SpawnX": Int(x), "SpawnY": Int(y if y is not None else BASE_Y), "SpawnZ": Int(z), "SpawnAngle": Float(angle),
         "Time": Long(6000), "DayTime": Long(6000), "LastPlayed": Long(int(time.time() * 1000)),
         "raining": Byte(0), "rainTime": Int(10 ** 9), "thundering": Byte(0), "thunderTime": Int(10 ** 9),
         "clearWeatherTime": Int(10 ** 9),

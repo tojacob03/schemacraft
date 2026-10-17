@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# private data and worlds built from it
+local/

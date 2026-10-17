@@ -48,6 +48,29 @@ Values longer than a page allows are cut with “…”. Those rows are real dat
 
 Without `--install`, copy `world/` into your saves folder yourself: `~/Library/Application Support/minecraft/saves` on macOS, `%APPDATA%\.minecraft\saves` on Windows, `~/.minecraft/saves` on Linux.
 
+## Galleries: answers you can read
+
+A city shows the shape of a database. To read actual answers, build a gallery: one wall per question, the answer drawn as a chart on 6 × 4 Minecraft maps (768 × 512 pixels, glowing frames), the question and the key number floating above it in large type.
+
+```bash
+schemacraft gallery questions.json --install
+```
+
+```json
+{"title": "Player scouting", "subtitle": "last 60 days",
+ "exhibits": [
+  {"question": "Which cards does he play in game 3?", "answer": "Lightning doubles: 14 % → 27 %",
+   "note": "356 best-of-three sets",
+   "chart": {"type": "table", "columns": ["Card", "Game 1", "Game 3"], "bars": [1, 2], "max": 45,
+             "rows": [["Lightning", "14.0 %", "26.7 %"], ["Fireball", "24.2 %", "19.1 %"]]}},
+  {"question": "Where does he lose?", "answer": "Little Prince: 39 %",
+   "chart": {"type": "bars", "max": 100, "ref": {"value": 56.8, "label": "his average"},
+             "panels": [{"bars": [{"label": "Little Prince", "value": 39.0, "text": "39.0 % · 154", "highlight": true}]}]}}
+ ]}
+```
+
+Charts are drawn without anti-aliasing and only in colours a map can show, so the wall in the game is pixel for pixel the image; `gallery` also writes each wall as `wall-N.png` to check before you open the world. Every chart picks the largest font that still fits. Chart types: `bars` (side-by-side panels, optional reference line, highlighted bars) and `table` (wrapped text, optional data bars behind numbers).
+
 ## How the database maps to the city
 
 | Database | City |

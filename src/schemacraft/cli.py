@@ -6,12 +6,15 @@ import re
 import shutil
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 from sqlalchemy.engine import make_url
 
 from schemacraft.anvil import write_world
 from schemacraft.blocks import build
+from schemacraft.gallery import build_gallery
 from schemacraft.introspect import introspect
 from schemacraft.layout import layout
+from schemacraft.mapart import quantise, to_rgb
 from schemacraft.render import render_icon, render_png
 from schemacraft.schem import write_schem
 
@@ -47,9 +50,17 @@ def main() -> None:
         p.add_argument("-o", "--out", required=True)
         p.add_argument("--name", default="schemacraft")
 
+    p = sub.add_parser("gallery", help="spec.json -> gallery world: one wall of map charts per question")
+    p.add_argument("spec")
+    p.add_argument("-o", "--out", help="output folder (default: ./<title>)")
+    p.add_argument("--name", help="world name (default: the spec's title)")
+    p.add_argument("--install", action="store_true", help="also copy the world into Minecraft's saves folder")
+
     args = parser.parse_args()
     if args.command == "build":
         _build(args)
+    elif args.command == "gallery":
+        _gallery(args)
     elif args.command == "inspect":
         model = introspect(args.url, sample=args.sample)
         Path(args.out).write_text(json.dumps(model, indent=2))
@@ -98,11 +109,32 @@ def _build(args) -> None:
     print(f"world -> {world}")
 
     if args.install:
-        target = _saves_dir() / name
-        if target.exists():
-            raise SystemExit(f"{target} already exists; pick another --name or remove it")
-        shutil.copytree(world, target)
-        print(f"installed -> {target}\nopen Minecraft Java, Singleplayer, '{name}'")
+        _install(world, name)
+
+
+def _gallery(args) -> None:
+    spec = _read(args.spec)
+    name = args.name or spec["title"]
+    out = Path(args.out or _slug(name))
+    out.mkdir(parents=True, exist_ok=True)
+    blocks, spawn, angle, images = build_gallery(spec)
+    for i, image in enumerate(images, start=1):  # what the map walls will show, to check before opening the game
+        plt.imsave(out / f"wall-{i}.png", to_rgb(quantise(image)))
+    world = out / "world"
+    if world.exists():
+        shutil.rmtree(world)
+    write_world(blocks, world, name, spawn, angle=angle)
+    print(f"{len(images)} walls, {len(blocks.maps)} maps -> {world}")
+    if args.install:
+        _install(world, name)
+
+
+def _install(world: Path, name: str) -> None:
+    target = _saves_dir() / name
+    if target.exists():
+        raise SystemExit(f"{target} already exists; pick another --name or remove it")
+    shutil.copytree(world, target)
+    print(f"installed -> {target}\nopen Minecraft Java, Singleplayer, '{name}'")
 
 
 def _read(path):
