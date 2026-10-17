@@ -185,7 +185,8 @@ def command_chain(blocks: Blocks, x: int, y: int, z: int, commands: list[str]) -
         kind = "command_block" if k == 0 else "chain_command_block"
         blocks.set(px, py, pz, f"minecraft:{kind}[conditional=false,facing={facing}]")
         blocks.entities[_chunk(px, pz)].append({
-            "id": f"minecraft:{kind}", "x": px, "y": py, "z": pz,
+            # all three command block kinds share one block entity type; "chain_command_block" is skipped on load
+            "id": "minecraft:command_block", "x": px, "y": py, "z": pz,
             "Command": command, "auto": k > 0, "powered": False, "conditionMet": False,
             "TrackOutput": False, "SuccessCount": 0, "UpdateLastExecution": True, "LastExecution": Long(0),
         })

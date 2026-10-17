@@ -165,6 +165,9 @@ def test_buttons_switch_every_frame_to_the_maps_of_their_view(tmp_path):
                 commands[(e["x"], e["y"], e["z"])] = e
     starts = [p for p, e in commands.items() if not e["auto"]]
     assert len(starts) == 3  # one button per view
+    # Minecraft 26.3 skipped chain blocks saved as "minecraft:chain_command_block": only the first
+    # frame switched. Impulse, chain and repeating blocks all use the block entity type command_block.
+    assert {e["id"] for e in commands.values()} == {"minecraft:command_block"}
 
     for k, (x, y, z) in enumerate(sorted(starts)):
         # follow the chain: down, down, then south under the ground
