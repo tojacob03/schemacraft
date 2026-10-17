@@ -1,0 +1,757 @@
+{
+  "dialect": "sqlite",
+  "tables": [
+    {
+      "schema": null,
+      "name": "Album",
+      "kind": "table",
+      "row_count": 347,
+      "columns": [
+        {
+          "name": "AlbumId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Title",
+          "type": "NVARCHAR(160)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "ArtistId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "ArtistId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Artist",
+          "ref_columns": [
+            "ArtistId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_AlbumArtistId",
+          "columns": [
+            "ArtistId"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "schema": null,
+      "name": "Artist",
+      "kind": "table",
+      "row_count": 275,
+      "columns": [
+        {
+          "name": "ArtistId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "schema": null,
+      "name": "Customer",
+      "kind": "table",
+      "row_count": 59,
+      "columns": [
+        {
+          "name": "CustomerId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "FirstName",
+          "type": "NVARCHAR(40)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "LastName",
+          "type": "NVARCHAR(20)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Company",
+          "type": "NVARCHAR(80)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.8305
+        },
+        {
+          "name": "Address",
+          "type": "NVARCHAR(70)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "City",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "State",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.4915
+        },
+        {
+          "name": "Country",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "PostalCode",
+          "type": "NVARCHAR(10)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0678
+        },
+        {
+          "name": "Phone",
+          "type": "NVARCHAR(24)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0169
+        },
+        {
+          "name": "Fax",
+          "type": "NVARCHAR(24)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.7966
+        },
+        {
+          "name": "Email",
+          "type": "NVARCHAR(60)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "SupportRepId",
+          "type": "INTEGER",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "SupportRepId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Employee",
+          "ref_columns": [
+            "EmployeeId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_CustomerSupportRepId",
+          "columns": [
+            "SupportRepId"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "schema": null,
+      "name": "Employee",
+      "kind": "table",
+      "row_count": 8,
+      "columns": [
+        {
+          "name": "EmployeeId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "LastName",
+          "type": "NVARCHAR(20)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "FirstName",
+          "type": "NVARCHAR(20)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Title",
+          "type": "NVARCHAR(30)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "ReportsTo",
+          "type": "INTEGER",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.125
+        },
+        {
+          "name": "BirthDate",
+          "type": "DATETIME",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "HireDate",
+          "type": "DATETIME",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Address",
+          "type": "NVARCHAR(70)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "City",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "State",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Country",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "PostalCode",
+          "type": "NVARCHAR(10)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Phone",
+          "type": "NVARCHAR(24)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Fax",
+          "type": "NVARCHAR(24)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Email",
+          "type": "NVARCHAR(60)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "ReportsTo"
+          ],
+          "ref_schema": null,
+          "ref_table": "Employee",
+          "ref_columns": [
+            "EmployeeId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_EmployeeReportsTo",
+          "columns": [
+            "ReportsTo"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "schema": null,
+      "name": "Genre",
+      "kind": "table",
+      "row_count": 25,
+      "columns": [
+        {
+          "name": "GenreId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "schema": null,
+      "name": "Invoice",
+      "kind": "table",
+      "row_count": 412,
+      "columns": [
+        {
+          "name": "InvoiceId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "CustomerId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "InvoiceDate",
+          "type": "DATETIME",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "BillingAddress",
+          "type": "NVARCHAR(70)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "BillingCity",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "BillingState",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.4903
+        },
+        {
+          "name": "BillingCountry",
+          "type": "NVARCHAR(40)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "BillingPostalCode",
+          "type": "NVARCHAR(10)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.068
+        },
+        {
+          "name": "Total",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "CustomerId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Customer",
+          "ref_columns": [
+            "CustomerId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_InvoiceCustomerId",
+          "columns": [
+            "CustomerId"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "schema": null,
+      "name": "InvoiceLine",
+      "kind": "table",
+      "row_count": 2240,
+      "columns": [
+        {
+          "name": "InvoiceLineId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "InvoiceId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "TrackId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "UnitPrice",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Quantity",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "TrackId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Track",
+          "ref_columns": [
+            "TrackId"
+          ]
+        },
+        {
+          "columns": [
+            "InvoiceId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Invoice",
+          "ref_columns": [
+            "InvoiceId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_InvoiceLineInvoiceId",
+          "columns": [
+            "InvoiceId"
+          ],
+          "unique": false
+        },
+        {
+          "name": "IFK_InvoiceLineTrackId",
+          "columns": [
+            "TrackId"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "schema": null,
+      "name": "MediaType",
+      "kind": "table",
+      "row_count": 5,
+      "columns": [
+        {
+          "name": "MediaTypeId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "schema": null,
+      "name": "Playlist",
+      "kind": "table",
+      "row_count": 18,
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "schema": null,
+      "name": "PlaylistTrack",
+      "kind": "table",
+      "row_count": 8715,
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "TrackId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "TrackId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Track",
+          "ref_columns": [
+            "TrackId"
+          ]
+        },
+        {
+          "columns": [
+            "PlaylistId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Playlist",
+          "ref_columns": [
+            "PlaylistId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_PlaylistTrackTrackId",
+          "columns": [
+            "TrackId"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "schema": null,
+      "name": "Track",
+      "kind": "table",
+      "row_count": 3503,
+      "columns": [
+        {
+          "name": "TrackId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(200)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "AlbumId",
+          "type": "INTEGER",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "MediaTypeId",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "GenreId",
+          "type": "INTEGER",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Composer",
+          "type": "NVARCHAR(220)",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.2792
+        },
+        {
+          "name": "Milliseconds",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "Bytes",
+          "type": "INTEGER",
+          "nullable": true,
+          "primary_key": false,
+          "null_fraction": 0.0
+        },
+        {
+          "name": "UnitPrice",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "primary_key": false,
+          "null_fraction": 0.0
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "MediaTypeId"
+          ],
+          "ref_schema": null,
+          "ref_table": "MediaType",
+          "ref_columns": [
+            "MediaTypeId"
+          ]
+        },
+        {
+          "columns": [
+            "GenreId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Genre",
+          "ref_columns": [
+            "GenreId"
+          ]
+        },
+        {
+          "columns": [
+            "AlbumId"
+          ],
+          "ref_schema": null,
+          "ref_table": "Album",
+          "ref_columns": [
+            "AlbumId"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IFK_TrackAlbumId",
+          "columns": [
+            "AlbumId"
+          ],
+          "unique": false
+        },
+        {
+          "name": "IFK_TrackGenreId",
+          "columns": [
+            "GenreId"
+          ],
+          "unique": false
+        },
+        {
+          "name": "IFK_TrackMediaTypeId",
+          "columns": [
+            "MediaTypeId"
+          ],
+          "unique": false
+        }
+      ]
+    }
+  ]
+}
