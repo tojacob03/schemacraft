@@ -21,7 +21,7 @@ def _image(city: dict):
                     img[z, x] = ROAD if lit else DARK_ROAD
 
     heights = [b["h"] for b in city["buildings"]]
-    norm = plt.Normalize(min(heights), max(heights) + 1e-9)
+    norm = plt.Normalize(min(heights), max(max(heights), min(heights) + 1))
     cmap = plt.get_cmap("viridis")
     for b in city["buildings"]:
         img[b["z"]:b["z"] + b["d"], b["x"]:b["x"] + b["w"]] = cmap(norm(b["h"]))[:3]
@@ -31,10 +31,13 @@ def _image(city: dict):
 def render_png(city: dict, path: str) -> None:
     w, d = city["size"]
     img, norm, cmap = _image(city)
-    scale = 0.12
+    scale = min(0.12, 20 / max(w, d))  # inches per block, at most 20 inches across
+    dpi = 150
     fig, ax = plt.subplots(figsize=(max(6, w * scale), max(6, d * scale)))
     ax.imshow(img, interpolation="nearest")
     for b in city["buildings"]:
+        if b["w"] * scale * dpi < 60:  # too small to read: skip the label
+            continue
         rows = "view" if b["rows"] is None else f"{b['rows']:,} rows"
         ax.text(
             b["x"] + b["w"] / 2 - 0.5, b["z"] + b["d"] / 2 - 0.5,
@@ -45,7 +48,7 @@ def render_png(city: dict, path: str) -> None:
     ax.set_ylabel("z")
     fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, shrink=0.6, label="height (blocks)")
     fig.tight_layout()
-    fig.savefig(path, dpi=150)
+    fig.savefig(path, dpi=dpi)
     plt.close(fig)
 
 

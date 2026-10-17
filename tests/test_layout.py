@@ -69,6 +69,23 @@ def test_layout_is_deterministic(model, city):
     assert layout(model) == city
 
 
+def test_small_groups_and_loose_tables_stay_in_town():
+    """A pair of linked tables stays together; tables without foreign keys fill in compactly."""
+    def table(name, refs=()):
+        return {"schema": None, "name": name, "kind": "table", "row_count": 10, "columns": [{}] * 4,
+                "foreign_keys": [{"ref_schema": None, "ref_table": r, "indexed": True} for r in refs]}
+    chain = [table("c0")] + [table(f"c{i}", [f"c{i - 1}"]) for i in range(1, 8)]
+    pair = [table("p1"), table("p2", ["p1"])]
+    loose = [table(f"l{i}") for i in range(30)]
+    city = layout({"tables": chain + pair + loose})
+
+    road = next(r for r in city["roads"] if (r["from"], r["to"]) == ("p2", "p1"))
+    assert len(road["cells"]) <= 2 * GAP
+    built = sum(b["w"] * b["d"] for b in city["buildings"])
+    w, d = city["size"]
+    assert built / (w * d) > 0.2, "loose tables drifted away from the city"
+
+
 def test_png_is_written(city, tmp_path):
     out = tmp_path / "city.png"
     render_png(city, str(out))

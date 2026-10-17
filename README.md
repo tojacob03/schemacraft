@@ -61,8 +61,14 @@ database ──► inspect ──► model.json ──► layout ──► city.
 ```
 
 - **inspect** reads structure through SQLAlchemy (DuckDB through its own catalog). Row counts and null shares come from one scan per table. Postgres tables above a million rows use the planner's statistics (`reltuples`, `pg_stats.null_frac`) instead, marked with `~` on the door sign.
-- **layout** places tables with a force-directed layout of the foreign-key graph, then snaps them to a block grid so no two buildings come closer than four blocks. Roads are found with A*, and a road that runs along an existing one costs less, so roads merge into streets. 600 tables take about 3.5 s.
+- **layout** gives the biggest web of linked tables a force-directed layout, then snaps it to a block grid so no two buildings come closer than four blocks. Smaller groups and tables without foreign keys dock onto the edge of their schema's district afterwards, member next to member, instead of drifting into an empty outer ring. Roads are found with A*, and a road that runs along an existing one costs less, so roads merge into streets.
 - **world** writes the Anvil format of Minecraft 1.21.4 (data version 4189). Newer versions upgrade the world when you open it, the same way they upgrade any older save. Light is left to the game.
+
+## A big one: GitLab
+
+GitLab publishes its database schema ([`db/structure.sql`](https://gitlab.com/gitlab-org/gitlab/-/blob/master/db/structure.sql)). Loaded into an empty Postgres it has 1,468 tables, 15 views and 2,381 foreign keys; schemacraft turns it into a city of 828 × 961 blocks in 22 seconds on a laptop. The tables are empty, so every building has the same height; the top-left block is the `gitlab_partitions_static` schema.
+
+![GitLab's schema as a city, top view](examples/gitlab.png)
 
 ## Development
 

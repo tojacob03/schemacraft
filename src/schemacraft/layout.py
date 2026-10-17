@@ -31,27 +31,59 @@ def height(rows: int | None) -> int:
 
 def layout(model: dict, seed: int = 42) -> dict:
     tables = {key(t): t for t in model["tables"]}
-    graph = nx.Graph()
-    graph.add_nodes_from(tables)
+    fk_graph = nx.Graph()
+    fk_graph.add_nodes_from(tables)
     links: dict = {}  # (from, to) -> every foreign key between them is indexed
     for k, t in tables.items():
         for fk in t["foreign_keys"]:
             ref = key({"schema": fk["ref_schema"], "name": fk["ref_table"]})
             if ref != k and ref in tables:
-                graph.add_edge(k, ref, weight=1.0)
+                fk_graph.add_edge(k, ref, weight=1.0)
                 links[(k, ref)] = links.get((k, ref), True) and fk.get("indexed", True)
-    schemas = {t["schema"] for t in tables.values()}
-    if len(schemas) > 1:  # an invisible hub per schema pulls its tables into one district
-        for k, t in tables.items():
-            graph.add_edge(("hub", t["schema"]), k, weight=0.3)
-
     sizes = {k: footprint(len(t["columns"])) for k, t in tables.items()}
-    spread = math.sqrt(sum((s + GAP) ** 2 for s in sizes.values()))
-    pos = nx.spring_layout(graph, seed=seed)
-    rects = _place(
-        {k: (round(pos[k][0] * spread - sizes[k] / 2), round(pos[k][1] * spread - sizes[k] / 2)) for k in tables},
-        sizes,
-    )
+
+    # The biggest web of linked tables gets a force-directed layout. Smaller groups and
+    # tables without foreign keys would drift into an outer ring there, so they dock
+    # onto the edge of their schema's district afterwards, member next to member.
+    groups = sorted(nx.connected_components(fk_graph), key=lambda c: (-len(c), min(c)))
+    core = groups[0] if len(groups[0]) > 1 else set()
+    graph = fk_graph.subgraph(core).copy()
+    if len({tables[k]["schema"] for k in core}) > 1:  # an invisible hub per schema pulls its tables together
+        for k in core:
+            graph.add_edge(("hub", tables[k]["schema"]), k, weight=0.3)
+    spread = math.sqrt(sum((sizes[k] + GAP) ** 2 for k in core))
+    pos = nx.spring_layout(graph, seed=seed) if core else {}
+    targets = {k: (round(pos[k][0] * spread - sizes[k] / 2), round(pos[k][1] * spread - sizes[k] / 2)) for k in core}
+
+    def centre(points):
+        points = list(points)
+        if not points:
+            return 0, 0
+        return round(sum(x for x, _ in points) / len(points)), round(sum(z for _, z in points) / len(points))
+
+    districts = {s: centre(targets[k] for k in core if tables[k]["schema"] == s) for s in {t["schema"] for t in tables.values()}}
+    fallback = centre(targets.values())
+    follow = {}  # table -> already placed neighbour it docks onto, or None for the group's first table
+    for group in groups:
+        if group is core:
+            continue
+        first = min(group)
+        follow[first] = None
+        for parent, child in nx.bfs_edges(fk_graph.subgraph(group), first):
+            follow[child] = parent
+
+    def target(k, placed):
+        if k in targets:
+            return targets[k]
+        if follow[k] is None:
+            s = tables[k]["schema"]
+            return districts[s] if any(tables[c]["schema"] == s for c in core) else fallback
+        return tuple(placed[follow[k]][:2])
+
+    centre_x, centre_z = fallback
+    order = sorted(core, key=lambda k: ((targets[k][0] - centre_x) ** 2 + (targets[k][1] - centre_z) ** 2, k))
+    order += list(follow)
+    rects = _place(order, target, sizes)
 
     min_x = min(r[0] for r in rects.values())
     min_z = min(r[1] for r in rects.values())
@@ -78,25 +110,21 @@ def layout(model: dict, seed: int = 42) -> dict:
     return {"size": size, "buildings": buildings, "roads": _roads(rects, links, size)}
 
 
-def _place(targets: dict, sizes: dict) -> dict:
-    """Put each building at its target, or the nearest spot keeping GAP to all placed ones.
-
-    Buildings closest to the centre go first, so the core stays dense.
-    """
-    cx = sum(x for x, _ in targets.values()) / len(targets)
-    cz = sum(z for _, z in targets.values()) / len(targets)
-    order = sorted(targets, key=lambda k: ((targets[k][0] - cx) ** 2 + (targets[k][1] - cz) ** 2, k))
+def _place(order: list, target, sizes: dict) -> dict:
+    """Put each building, in order, at target(k, placed) or the nearest spot keeping GAP to all placed ones."""
     index: dict = defaultdict(list)  # bucket -> placed rects inflated by GAP
     placed: dict = {}
+    reached: dict = {}  # target -> ring radius where the last search there succeeded
     for k in order:
-        tx, tz = targets[k]
+        tx, tz = target(k, placed)
         s = sizes[k]
-        r = 0
+        r = reached.get((tx, tz), 0)  # many groups start at the same district centre: skip the rings already full
         while True:
             spot = next((o for o in _ring(r) if _fits(tx + o[0], tz + o[1], s, index)), None)
             if spot:
                 rect = [tx + spot[0], tz + spot[1], s, s]
                 placed[k] = rect
+                reached[(tx, tz)] = r
                 grown = (rect[0] - GAP, rect[1] - GAP, s + 2 * GAP, s + 2 * GAP)
                 for b in _buckets(*grown):
                     index[b].append(grown)
