@@ -3,6 +3,7 @@ name = "schemacraft"
 version = "0.1.0"
 description = "Turn a database into a Minecraft city."
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Till Oscar Jacob", email = "to_jacob@me.com" }
 ]
