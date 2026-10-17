@@ -206,6 +206,7 @@ def _level_dat(name: str, spawn: tuple[int, int, int], angle: float = 0) -> nbtl
     rules = {
         "doDaylightCycle": "false", "doWeatherCycle": "false", "doMobSpawning": "false",
         "doTraderSpawning": "false", "doPatrolSpawning": "false", "doInsomnia": "false", "spawnRadius": "0",
+        "commandBlockOutput": "false",
     }
     data = Compound({
         "DataVersion": Int(DATA_VERSION),

@@ -69,6 +69,8 @@ schemacraft gallery questions.json --install
  ]}
 ```
 
+An exhibit can have `"views": [{"label": "Game 1", "chart": {...}}, ...]` instead of one `chart`: a button per view stands in front of the wall, and pressing it swaps every map on the wall through a chain of command blocks under the floor, so a wall works like a filter. The helpers `frame()`, `text()` and `command_chain()` in `schemacraft.gallery` place the same things anywhere in a world you build yourself.
+
 Charts are drawn without anti-aliasing and only in colours a map can show, so the wall in the game is pixel for pixel the image; `gallery` also writes each wall as `wall-N.png` to check before you open the world. Every chart picks the largest font that still fits. Chart types: `bars` (side-by-side panels, optional reference line, highlighted bars) and `table` (wrapped text, optional data bars behind numbers).
 
 ## How the database maps to the city

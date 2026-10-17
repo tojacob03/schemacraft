@@ -147,3 +147,35 @@ def test_spawn_is_outside_in_front_of_an_open_door(gallery):
     assert z > z1, "players spawn on the highest surface: inside the gallery that is the roof"
     door = blocks.raster(blocks.sequence, x, y, z1, 1, 4, 1)
     assert (door == 0).all(), "the entrance in front of the spawn is closed"
+
+
+def test_buttons_switch_every_frame_to_the_maps_of_their_view(tmp_path):
+    bars = lambda v: {"type": "bars", "panels": [{"title": f"view {v}", "bars": [{"label": "a", "value": v}]}]}  # noqa: E731
+    spec = {"title": "t", "exhibits": [{"question": "q", "answer": "a",
+                                        "views": [{"label": f"V{v}", "chart": bars(v)} for v in (1, 2, 3)]}]}
+    blocks, spawn, angle, _ = build_gallery(spec)
+    world = write_world(blocks, tmp_path / "w", "t", spawn, angle=angle)
+    assert len(blocks.maps) == 3 * WALL_W * WALL_H
+
+    frames = {str(f["Tags"][0]): f for f in read_entities(world) if f["id"] == "minecraft:glow_item_frame"}
+    commands = {}  # (x, y, z) -> command block
+    for c in blocks.entities.values():
+        for e in c:
+            if "Command" in e:
+                commands[(e["x"], e["y"], e["z"])] = e
+    starts = [p for p, e in commands.items() if not e["auto"]]
+    assert len(starts) == 3  # one button per view
+
+    for k, (x, y, z) in enumerate(sorted(starts)):
+        # follow the chain: down, down, then south under the ground
+        chain, pos = [], (x, y, z)
+        while pos in commands:
+            chain.append(commands[pos]["Command"])
+            px, py, pz = pos
+            pos = (px, py - 1, pz) if py > y - 2 else (px, py, pz + 1)
+        assert len(chain) == len(frames), "the chain must reach every frame"
+        for command in chain:
+            tag = command.split("tag=")[1].split(",")[0]
+            map_id = int(command.rsplit(" ", 1)[1])
+            assert tag in frames
+            assert map_id // (WALL_W * WALL_H) == k, "a button shows the maps of its own view"
