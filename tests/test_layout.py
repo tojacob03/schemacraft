@@ -1,5 +1,4 @@
 import itertools
-from pathlib import Path
 
 import pytest
 
@@ -7,12 +6,10 @@ from schemacraft.introspect import introspect
 from schemacraft.layout import GAP, layout
 from schemacraft.render import render_png
 
-CHINOOK = Path(__file__).parent / "fixtures" / "chinook.sqlite"
-
 
 @pytest.fixture(scope="module")
-def model():
-    return introspect(f"sqlite:///{CHINOOK}")
+def model(chinook_url):
+    return introspect(chinook_url)
 
 
 @pytest.fixture(scope="module")

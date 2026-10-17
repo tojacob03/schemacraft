@@ -38,7 +38,8 @@
           "ref_table": "Artist",
           "ref_columns": [
             "ArtistId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [
@@ -182,7 +183,8 @@
           "ref_table": "Employee",
           "ref_columns": [
             "EmployeeId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [
@@ -316,7 +318,8 @@
           "ref_table": "Employee",
           "ref_columns": [
             "EmployeeId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [
@@ -432,7 +435,8 @@
           "ref_table": "Customer",
           "ref_columns": [
             "CustomerId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [
@@ -496,7 +500,8 @@
           "ref_table": "Track",
           "ref_columns": [
             "TrackId"
-          ]
+          ],
+          "indexed": true
         },
         {
           "columns": [
@@ -506,7 +511,8 @@
           "ref_table": "Invoice",
           "ref_columns": [
             "InvoiceId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [
@@ -604,7 +610,8 @@
           "ref_table": "Track",
           "ref_columns": [
             "TrackId"
-          ]
+          ],
+          "indexed": true
         },
         {
           "columns": [
@@ -614,7 +621,8 @@
           "ref_table": "Playlist",
           "ref_columns": [
             "PlaylistId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [
@@ -706,7 +714,8 @@
           "ref_table": "MediaType",
           "ref_columns": [
             "MediaTypeId"
-          ]
+          ],
+          "indexed": true
         },
         {
           "columns": [
@@ -716,7 +725,8 @@
           "ref_table": "Genre",
           "ref_columns": [
             "GenreId"
-          ]
+          ],
+          "indexed": true
         },
         {
           "columns": [
@@ -726,7 +736,8 @@
           "ref_table": "Album",
           "ref_columns": [
             "AlbumId"
-          ]
+          ],
+          "indexed": true
         }
       ],
       "indexes": [

@@ -6,6 +6,8 @@
   "buildings": [
     {
       "table": "Album",
+      "schema": null,
+      "kind": "table",
       "x": 85,
       "z": 48,
       "w": 9,
@@ -16,6 +18,8 @@
     },
     {
       "table": "Artist",
+      "schema": null,
+      "kind": "table",
       "x": 98,
       "z": 56,
       "w": 9,
@@ -26,6 +30,8 @@
     },
     {
       "table": "Customer",
+      "schema": null,
+      "kind": "table",
       "x": 21,
       "z": 61,
       "w": 13,
@@ -36,6 +42,8 @@
     },
     {
       "table": "Employee",
+      "schema": null,
+      "kind": "table",
       "x": 4,
       "z": 67,
       "w": 13,
@@ -46,6 +54,8 @@
     },
     {
       "table": "Genre",
+      "schema": null,
+      "kind": "table",
       "x": 86,
       "z": 33,
       "w": 9,
@@ -56,6 +66,8 @@
     },
     {
       "table": "Invoice",
+      "schema": null,
+      "kind": "table",
       "x": 38,
       "z": 53,
       "w": 11,
@@ -66,6 +78,8 @@
     },
     {
       "table": "InvoiceLine",
+      "schema": null,
+      "kind": "table",
       "x": 54,
       "z": 44,
       "w": 11,
@@ -76,6 +90,8 @@
     },
     {
       "table": "MediaType",
+      "schema": null,
+      "kind": "table",
       "x": 79,
       "z": 20,
       "w": 9,
@@ -86,6 +102,8 @@
     },
     {
       "table": "Playlist",
+      "schema": null,
+      "kind": "table",
       "x": 60,
       "z": 4,
       "w": 9,
@@ -96,6 +114,8 @@
     },
     {
       "table": "PlaylistTrack",
+      "schema": null,
+      "kind": "table",
       "x": 65,
       "z": 18,
       "w": 9,
@@ -106,6 +126,8 @@
     },
     {
       "table": "Track",
+      "schema": null,
+      "kind": "table",
       "x": 71,
       "z": 33,
       "w": 11,
@@ -119,6 +141,7 @@
     {
       "from": "Album",
       "to": "Artist",
+      "indexed": true,
       "cells": [
         [
           94,
@@ -141,6 +164,7 @@
     {
       "from": "Customer",
       "to": "Employee",
+      "indexed": true,
       "cells": [
         [
           20,
@@ -163,6 +187,7 @@
     {
       "from": "Invoice",
       "to": "Customer",
+      "indexed": true,
       "cells": [
         [
           37,
@@ -185,6 +210,7 @@
     {
       "from": "InvoiceLine",
       "to": "Invoice",
+      "indexed": true,
       "cells": [
         [
           53,
@@ -211,30 +237,31 @@
     {
       "from": "InvoiceLine",
       "to": "Track",
+      "indexed": true,
       "cells": [
         [
-          64,
-          43
-        ],
-        [
           65,
-          43
+          44
         ],
         [
           66,
-          43
+          44
         ],
         [
           67,
-          43
+          44
         ],
         [
           68,
-          43
+          44
         ],
         [
           69,
-          43
+          44
+        ],
+        [
+          70,
+          44
         ],
         [
           70,
@@ -245,6 +272,7 @@
     {
       "from": "PlaylistTrack",
       "to": "Playlist",
+      "indexed": true,
       "cells": [
         [
           65,
@@ -271,6 +299,7 @@
     {
       "from": "PlaylistTrack",
       "to": "Track",
+      "indexed": true,
       "cells": [
         [
           71,
@@ -301,44 +330,46 @@
     {
       "from": "Track",
       "to": "Album",
+      "indexed": true,
       "cells": [
         [
           81,
           44
         ],
         [
-          82,
-          44
-        ],
-        [
-          83,
-          44
-        ],
-        [
-          84,
-          44
-        ],
-        [
-          85,
-          44
-        ],
-        [
-          85,
+          81,
           45
         ],
         [
-          85,
+          81,
           46
         ],
         [
-          85,
+          81,
           47
+        ],
+        [
+          82,
+          47
+        ],
+        [
+          83,
+          47
+        ],
+        [
+          84,
+          47
+        ],
+        [
+          84,
+          48
         ]
       ]
     },
     {
       "from": "Track",
       "to": "Genre",
+      "indexed": true,
       "cells": [
         [
           82,
@@ -361,6 +392,7 @@
     {
       "from": "Track",
       "to": "MediaType",
+      "indexed": true,
       "cells": [
         [
           79,

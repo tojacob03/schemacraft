@@ -1,10 +1,6 @@
-from pathlib import Path
-
 import pytest
 
 from schemacraft.introspect import introspect
-
-CHINOOK = Path(__file__).parent / "fixtures" / "chinook.sqlite"
 
 # Published Chinook row counts (lerocha/chinook-database v1.4.5).
 ROWS = {
@@ -22,8 +18,8 @@ FKS = {
 
 
 @pytest.fixture(scope="module")
-def model():
-    return introspect(f"sqlite:///{CHINOOK}")
+def model(chinook_url):
+    return introspect(chinook_url)
 
 
 def by_name(model):
@@ -53,6 +49,19 @@ def test_null_fractions(model):
     emp = {c["name"]: c for c in by_name(model)["Employee"]["columns"]}
     assert emp["ReportsTo"]["null_fraction"] == 0.125  # only the general manager has no boss
     assert emp["EmployeeId"]["null_fraction"] == 0.0
+
+
+def test_foreign_key_index_detection(model, library_url):
+    assert all(fk["indexed"] for t in model["tables"] for fk in t["foreign_keys"])  # Chinook indexes every FK
+    library = by_name(introspect(library_url))
+    assert library["book"]["foreign_keys"][0]["indexed"] is False
+    assert library["review"]["foreign_keys"][0]["indexed"] is True
+
+
+def test_views(library_url):
+    view = by_name(introspect(library_url))["top_books"]
+    assert view["kind"] == "view" and view["row_count"] is None
+    assert [c["name"] for c in view["columns"]] == ["book_id", "stars"]
 
 
 def test_indexes_present(model):

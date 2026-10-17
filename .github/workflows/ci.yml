@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --all-extras
+      - run: uv run pytest -q
+      - name: Build the Chinook world
+        run: uv run schemacraft build sqlite:///tests/fixtures/chinook.sqlite --name Chinook -o out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chinook-world
+          path: out

@@ -1,6 +1,6 @@
 [project]
 name = "schemacraft"
-version = "0.1.0"
+version = "0.2.0"
 description = "Turn a database into a Minecraft city."
 readme = "README.md"
 license = "MIT"
@@ -10,11 +10,17 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "matplotlib>=3.11.2",
+    "nbtlib>=2.0.4",
     "networkx>=3.7",
     "numpy>=2.5.4",
     "scipy>=1.18.1",
     "sqlalchemy>=2.1.5",
 ]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+mysql = ["pymysql>=1.1"]
+duckdb = ["duckdb>=1.1"]
 
 [project.scripts]
 schemacraft = "schemacraft.cli:main"
@@ -25,5 +31,8 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "duckdb>=1.1",
+    "pgserver>=0.1.4",
+    "psycopg[binary]>=3.2",
     "pytest>=9.1.1",
 ]
