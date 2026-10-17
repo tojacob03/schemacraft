@@ -13,8 +13,10 @@ import pytest
 from schemacraft.anvil import DATA_VERSION, write_world
 from schemacraft.blocks import BASE_Y
 from schemacraft.charts import render
-from schemacraft.gallery import WALL_H, WALL_W, build_gallery
+from schemacraft.gallery import DEPTH, STEP, WALL_H, WALL_W, WALL_Z, build_gallery
 from schemacraft.mapart import palette, quantise, tiles, to_rgb
+
+TEXT_PIXEL = 0.025  # blocks per font pixel of a text display at scale 1 (as in Minecraft's renderer)
 
 SPEC = {
     "title": "Test gallery",
@@ -78,11 +80,11 @@ def read_entities(world):
 def gallery(tmp_path_factory):
     blocks, spawn, angle, images = build_gallery(SPEC)
     world = write_world(blocks, tmp_path_factory.mktemp("g") / "world", "Test", spawn, angle=angle)
-    return world, images, spawn
+    return world, images, spawn, blocks
 
 
 def test_every_tile_hangs_in_a_frame_and_shows_the_chart(gallery):
-    world, images, _ = gallery
+    world, images, _, _ = gallery
     frames = [e for e in read_entities(world) if e["id"] == "minecraft:glow_item_frame"]
     assert len(frames) == len(images) * WALL_W * WALL_H
     maps = {int(f["Item"]["components"]["minecraft:map_id"]): f for f in frames}
@@ -108,15 +110,40 @@ def test_every_tile_hangs_in_a_frame_and_shows_the_chart(gallery):
 
 
 def test_questions_and_answers_float_above_the_walls(gallery):
-    world, _, _ = gallery
+    world, _, _, _ = gallery
     texts = [json.loads(str(e["text"]))["text"] for e in read_entities(world) if e["id"] == "minecraft:text_display"]
-    for ex in SPEC["exhibits"]:
-        assert ex["question"] in texts and ex["answer"] in texts
+    for i, ex in enumerate(SPEC["exhibits"], start=1):
+        assert f"{i}. {ex['question']}" in texts and ex["answer"] in texts
     assert "Test gallery" in texts and "n = 356" in texts
 
 
 def test_spawn_looks_at_the_first_wall(gallery):
-    world, _, spawn = gallery
+    world, _, spawn, _ = gallery
     data = nbtlib.load(world / "level.dat")["Data"]
     assert float(data["SpawnAngle"]) == 180.0  # north, where the walls hang
     assert (data["SpawnX"], data["SpawnZ"]) == (spawn[0], spawn[2])
+
+
+def test_text_never_reaches_through_a_wall(gallery):
+    world, _, _, _ = gallery
+    x1, z1 = 2 + STEP * len(SPEC["exhibits"]) + 1, WALL_Z + DEPTH
+    for e in read_entities(world):
+        if e["id"] != "minecraft:text_display":
+            continue
+        assert e["billboard"] == "fixed", "a turning text swings into the walls"
+        text = json.loads(str(e["text"]))["text"]
+        scale = float(e["transformation"]["scale"][0])
+        widest = min(int(e["line_width"]), len(text) * 7)  # 7 px: the widest bold glyphs of the Minecraft font
+        half = widest * TEXT_PIXEL * scale / 2
+        x, z = float(e["Pos"][0]), float(e["Pos"][2])
+        assert 1 <= x - half and x + half <= x1, f"{text!r} is wider than the gallery"
+        if z < z1:  # inside: stays within its own wall and the gap next to it
+            assert half <= (WALL_W + 2) / 2, f"{text!r} runs into the next wall"
+
+
+def test_spawn_is_outside_in_front_of_an_open_door(gallery):
+    _, _, (x, y, z), blocks = gallery
+    z1 = WALL_Z + DEPTH
+    assert z > z1, "players spawn on the highest surface: inside the gallery that is the roof"
+    door = blocks.raster(blocks.sequence, x, y, z1, 1, 4, 1)
+    assert (door == 0).all(), "the entrance in front of the spawn is closed"

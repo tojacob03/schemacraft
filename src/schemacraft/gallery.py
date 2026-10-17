@@ -41,6 +41,8 @@ def build_gallery(spec: dict) -> tuple[Blocks, tuple[int, int, int], float, list
     for x in range(3, x1 - 1, 4):
         for z in range(WALL_Z + 3, z1 - 1, 4):
             blocks.set(x, CEILING, z, LIGHT)
+    door = x1 // 2  # entrance in the middle of the south wall
+    blocks.fill(door - 1, BASE_Y, z1, door + 1, BASE_Y + 3, z1, "minecraft:air")
 
     images = []
     for i, ex in enumerate(exhibits):
@@ -50,17 +52,20 @@ def build_gallery(spec: dict) -> tuple[Blocks, tuple[int, int, int], float, list
         for (col, row), tile in tiles(quantise(image)).items():
             blocks.maps.append(tile)
             _frame(blocks, left + col, BASE_Y + WALL_H - row, WALL_Z + 1, len(blocks.maps) - 1)
-        centre = left + WALL_W / 2
-        _text(blocks, centre, BASE_Y + WALL_H + 2.6, WALL_Z + 1.5, ex["question"], 1.2, "#555555")
-        _text(blocks, centre, BASE_Y + WALL_H + 1.2, WALL_Z + 1.5, ex["answer"], 1.6, "#1d5fa8", bold=True)
+        centre, room = left + WALL_W / 2, WALL_W + 2  # text may use the wall and one block either side
+        _text(blocks, centre, BASE_Y + WALL_H + 2.4, WALL_Z + 1.1, f"{i + 1}. {ex['question']}", 1.2, "#555555", room)
+        _text(blocks, centre, BASE_Y + WALL_H + 1.2, WALL_Z + 1.1, ex["answer"], 1.6, "#1d5fa8", room, bold=True)
         if ex.get("note"):
-            _text(blocks, centre, BASE_Y + 0.15, WALL_Z + 1.5, ex["note"], 0.6, "#777777")
+            _text(blocks, centre, BASE_Y + 0.2, WALL_Z + 1.1, ex["note"], 0.6, "#777777", room)
 
-    _text(blocks, x1 / 2, CEILING - 1.6, z1 - 1.5, spec["title"], 2.2, "#222222", bold=True, width=1200)
+    # the name over the entrance, on the outside of the south wall
+    facade = min(x1 - 4, 30)
+    _text(blocks, door + 0.5, BASE_Y + 6.2, z1 + 1.05, spec["title"], 2.0, "#222222", facade, bold=True)
     if spec.get("subtitle"):
-        _text(blocks, x1 / 2, CEILING - 2.6, z1 - 1.5, spec["subtitle"], 1.0, "#555555", width=600)
-    spawn = (3 + WALL_W // 2, BASE_Y, WALL_Z + 8)
-    return blocks, spawn, 180.0, images  # look north, at the first wall
+        _text(blocks, door + 0.5, BASE_Y + 5.0, z1 + 1.05, spec["subtitle"], 1.0, "#555555", facade)
+    # New players spawn on the highest surface at the spawn point, so spawn outside, facing the entrance.
+    spawn = (door, BASE_Y, z1 + 6)
+    return blocks, spawn, 180.0, images
 
 
 def _uuid(*parts) -> IntArray:
@@ -87,19 +92,22 @@ def _frame(blocks: Blocks, x: int, y: int, z: int, map_id: int) -> None:
     }))
 
 
-def _text(blocks: Blocks, x: float, y: float, z: float, text: str, scale: float, colour: str, bold=False,
-          width: int = 260) -> None:
-    """Floating text that turns to face the player, fully lit; wraps at about `width` / scale text pixels."""
+TEXT_PIXEL = 0.025  # blocks per font pixel of a text display at scale 1
+
+
+def _text(blocks: Blocks, x: float, y: float, z: float, text: str, scale: float, colour: str, width: float,
+          bold=False) -> None:
+    """Text standing parallel to the north wall, read from the south, wrapped to `width` blocks, fully lit."""
     s = Float(scale)
     blocks.mobs[(int(x) >> 4, int(z) >> 4)].append(Compound({
         "id": String("minecraft:text_display"),
         "UUID": _uuid("text", x, y, z, text),
         "Pos": List[Double]([Double(x), Double(y), Double(z)]),
         "Motion": List[Double]([Double(0), Double(0), Double(0)]),
-        "Rotation": List[Float]([Float(0), Float(0)]),
+        "Rotation": List[Float]([Float(0), Float(0)]),  # yaw 0: faces south
         "text": String(json.dumps({"text": text, "color": colour, "bold": bold})),
-        "billboard": String("vertical"),
-        "line_width": Int(int(width / scale)),
+        "billboard": String("fixed"),
+        "line_width": Int(int(width / (TEXT_PIXEL * scale))),
         "background": Int(0x00000000),
         "shadow": Byte(0), "see_through": Byte(0), "alignment": String("center"),
         "brightness": Compound({"block": Int(15), "sky": Int(15)}),
