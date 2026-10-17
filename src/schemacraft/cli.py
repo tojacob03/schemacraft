@@ -26,10 +26,13 @@ def main() -> None:
     p.add_argument("--name", help="world name (default: database name)")
     p.add_argument("--install", action="store_true", help="also copy the world into Minecraft's saves folder")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--sample", type=int, default=0, metavar="N",
+                   help="put the first N rows of every table in a book on a lectern (real data ends up in the world)")
 
     p = sub.add_parser("inspect", help="read a database into model.json")
     p.add_argument("url")
     p.add_argument("-o", "--out", default="model.json")
+    p.add_argument("--sample", type=int, default=0, metavar="N", help="also read the first N rows of every table")
 
     p = sub.add_parser("layout", help="plan the city from model.json")
     p.add_argument("model", nargs="?", default="model.json")
@@ -48,7 +51,7 @@ def main() -> None:
     if args.command == "build":
         _build(args)
     elif args.command == "inspect":
-        model = introspect(args.url)
+        model = introspect(args.url, sample=args.sample)
         Path(args.out).write_text(json.dumps(model, indent=2))
         print(f"{len(model['tables'])} tables -> {args.out}")
     elif args.command == "layout":
@@ -73,7 +76,7 @@ def _build(args) -> None:
     out = Path(args.out or _slug(name))
     out.mkdir(parents=True, exist_ok=True)
 
-    model = introspect(args.url)
+    model = introspect(args.url, sample=args.sample)
     (out / "model.json").write_text(json.dumps(model, indent=2))
     print(f"inspected {len(model['tables'])} tables")
     if not model["tables"]:

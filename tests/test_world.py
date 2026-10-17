@@ -2,6 +2,7 @@
 
 import gzip
 import io
+import json
 
 import nbtlib
 import pytest
@@ -20,8 +21,8 @@ ARNIS_CHUNK_KEYS = {
 }
 
 
-def make(url, tmp_path, name):
-    model = introspect(url)
+def make(url, tmp_path, name, sample=0):
+    model = introspect(url, sample=sample)
     city = layout(model)
     blocks, spawn = build(model, city, name)
     world = write_world(blocks, tmp_path / name, name, spawn)
@@ -158,6 +159,35 @@ def test_data_quality_is_visible(library):
     assert "minecraft:cracked_stone_bricks" in walls["author"]  # bio is 80 % null
     assert "minecraft:cracked_stone_bricks" not in walls["review"]  # no nulls at all
     assert set(walls["top_books"]) <= {"minecraft:light_blue_stained_glass", "minecraft:air", "minecraft:oak_wall_sign"}
+
+
+def lecterns(chunks):
+    return [e for c in chunks.values() for e in c["block_entities"] if e["id"] == "minecraft:lectern"]
+
+
+def test_no_lectern_without_sample(chinook):
+    assert lecterns(chinook[-1]) == []
+
+
+def test_sample_rows_as_books(chinook_url, tmp_path):
+    model, city, _, _, _, chunks = make(chinook_url, tmp_path, "Sampled", sample=3)
+    tables = {t["name"]: t for t in model["tables"]}
+    books = {(int(e["x"]), int(e["z"])): e for e in lecterns(chunks)}
+    assert len(books) == len(city["buildings"])
+    for b in city["buildings"]:
+        cx, cz = b["x"] + (b["w"] - 1) // 2, b["z"] + (b["d"] - 1) // 2
+        assert block_at(chunks, cx, BASE_Y, cz) == "minecraft:lectern"
+        content = books[(cx, cz)]["Book"]["components"]["minecraft:written_book_content"]
+        assert content["title"]["raw"] == b["table"]
+        pages = [json.loads(str(p["raw"])) for p in content["pages"]]
+        assert len(pages) == 3  # one page per row
+        table = tables[b["table"]]
+        for page, row in zip(pages, table["sample"]):
+            parts = [str(x["text"]) for x in page["extra"]]
+            assert parts[0].startswith("Row ")
+            assert f"{table['columns'][0]['name']}: " in parts and parts[2].strip() == row[0]
+            lines = sum(-(-len(p.rstrip("\n")) // 19) for p in "".join(parts).split("\n") if p) or 0
+            assert lines <= 14, f"page for {b['table']} needs {lines} lines"
 
 
 def test_schematic(chinook, tmp_path):

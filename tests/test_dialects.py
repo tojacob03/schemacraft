@@ -96,4 +96,6 @@ def test_duckdb(tmp_path):
     assert tables["review"]["foreign_keys"][0]["indexed"] is True
     bio = next(c for c in tables["author"]["columns"] if c["name"] == "bio")
     assert bio["null_fraction"] == 0.75
+    sampled = {t["name"]: t for t in introspect(f"duckdb:///{path}", sample=2)["tables"]}
+    assert len(sampled["book"]["sample"]) == 2 and "sample" not in sampled["long_titles"]
     assert [c["primary_key"] for c in tables["author"]["columns"]] == [True, False, False]

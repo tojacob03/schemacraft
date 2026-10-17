@@ -6,7 +6,7 @@ Every table becomes a building, every foreign key a road. Walk in through the do
 
 ![Chinook as a city, top view](examples/chinook.png)
 
-*The [Chinook](https://github.com/lerocha/chinook-database) sample database from above. Colour is building height. [Download the playable world](examples/chinook-world.zip).*
+*The [Chinook](https://github.com/lerocha/chinook-database) sample database from above. Colour is building height. [Download the playable world](examples/chinook-world.zip) (built with `--sample 5`).*
 
 ## Try it
 
@@ -36,6 +36,16 @@ uvx --from 'schemacraft[mysql] @ git+https://github.com/tojacob03/schemacraft' s
 | `model.json` | everything read from the database |
 | `city.json` | the city plan: building and road positions |
 
+### Sample rows
+
+By default the world holds no data, only its shape: counts, columns, null shares. With `--sample N` every table building gets a lectern in the middle of the ground floor with a book of its first N rows, one page per row:
+
+```bash
+schemacraft build sqlite:///shop.db --sample 5 --install
+```
+
+Values longer than a page allows are cut with “…”. Those rows are real data: they end up in `model.json`, the world and the schematic, so think twice before you share them.
+
 Without `--install`, copy `world/` into your saves folder yourself: `~/Library/Application Support/minecraft/saves` on macOS, `%APPDATA%\.minecraft\saves` on Windows, `~/.minecraft/saves` on Linux.
 
 ## How the database maps to the city
@@ -50,6 +60,7 @@ Without `--install`, copy `world/` into your saves folder yourself: `~/Library/A
 | tables linked by foreign keys | neighbours |
 | schema | district; every schema has its own roof colour |
 | nulls | cracked bricks: the more nulls a table holds, the more cracks |
+| rows (with `--sample N`) | a book on a lectern, one page per row |
 | foreign key without an index | dark blackstone road with broken lamps |
 
 The last one is a real performance finding. A foreign key whose columns do not lead the primary key or any index forces a scan whenever the parent row is deleted or joined from that side. In Postgres that is a classic cause of slow deletes. (DuckDB joins by hashing, so there a dark road is rarely a problem.)

@@ -9,20 +9,22 @@ from sqlalchemy import create_engine, func, inspect, make_url, select, text
 from sqlalchemy.sql import column, table
 
 ESTIMATE_ABOVE = 1_000_000  # Postgres: trust the planner statistics instead of scanning bigger tables
+VALUE_CHARS = 80  # sample values are cut to this length
 
 
-def introspect(url: str) -> dict:
+def introspect(url: str, sample: int = 0) -> dict:
+    """Structure and statistics; with sample > 0 also the first rows of every table (real data!)."""
     if url.startswith("duckdb:"):
-        return _introspect_duckdb(url)
+        return _introspect_duckdb(url, sample)
     engine = create_engine(url)
     insp = inspect(engine)
     tables = []
     with engine.connect() as conn:
         for schema in _schemas(insp):
             for name in insp.get_table_names(schema=schema):
-                tables.append(_table(insp, conn, schema, name, "table"))
+                tables.append(_table(insp, conn, schema, name, "table", sample))
             for name in insp.get_view_names(schema=schema):
-                tables.append(_table(insp, conn, schema, name, "view"))
+                tables.append(_table(insp, conn, schema, name, "view", sample))
     engine.dispose()
     return {"dialect": engine.dialect.name, "tables": tables}
 
@@ -34,7 +36,7 @@ def _schemas(insp) -> list[str | None]:
     return [s for s in insp.get_schema_names() if s != "information_schema" and not s.startswith("pg_")]
 
 
-def _table(insp, conn, schema, name, kind) -> dict:
+def _table(insp, conn, schema, name, kind, sample=0) -> dict:
     pk_columns = insp.get_pk_constraint(name, schema=schema)["constrained_columns"]
     pk = set(pk_columns)
     indexes = [
@@ -75,7 +77,24 @@ def _table(insp, conn, schema, name, kind) -> dict:
     if kind == "table":
         if conn.dialect.name != "postgresql" or not _add_pg_estimates(conn, schema, entry):
             _add_counts(conn, schema, entry)
+        if sample:
+            names = [c["name"] for c in columns]
+            t = table(name, *[column(n) for n in names], schema=schema)
+            entry["sample"] = [_show_row(r) for r in conn.execute(select(*[t.c[n] for n in names]).limit(sample))]
     return entry
+
+
+def _show_row(row) -> list[str]:
+    out = []
+    for v in row:
+        if v is None:
+            s = "NULL"
+        elif isinstance(v, (bytes, bytearray, memoryview)):
+            s = f"<{len(bytes(v))} bytes>"
+        else:
+            s = str(v)
+        out.append(s if len(s) <= VALUE_CHARS else s[:VALUE_CHARS - 1] + "…")
+    return out
 
 
 def _add_pg_estimates(conn, schema, entry) -> bool:
@@ -98,7 +117,7 @@ def _add_pg_estimates(conn, schema, entry) -> bool:
     return True
 
 
-def _introspect_duckdb(url: str) -> dict:
+def _introspect_duckdb(url: str, sample: int = 0) -> dict:
     """DuckDB through its own catalog functions; duckdb-engine's reflection breaks on SQLAlchemy 2.1."""
     import duckdb
 
@@ -162,6 +181,11 @@ def _introspect_duckdb(url: str) -> dict:
             entry["row_count"] = counts[0]
             for c, non_null in zip(cols, counts[1:]):
                 c["null_fraction"] = round(1 - non_null / counts[0], 4) if counts[0] else 0.0
+            if sample:
+                picked = ", ".join(q(c["name"]) for c in cols)
+                entry["sample"] = [
+                    _show_row(r) for r in con.execute(f"SELECT {picked} FROM {q(s)}.{q(t)} LIMIT {int(sample)}").fetchall()
+                ]
         tables.append(entry)
     con.close()
     return {"dialect": "duckdb", "tables": tables}

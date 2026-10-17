@@ -113,6 +113,8 @@ def _nbt(value):
         return Int(value)
     if isinstance(value, str):
         return String(value)
+    if isinstance(value, list) and value and isinstance(value[0], dict):
+        return List[Compound]([_nbt(v) for v in value])
     if isinstance(value, list):
         return List[String]([String(v) for v in value])
     return Compound({k: _nbt(v) for k, v in value.items()})

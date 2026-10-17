@@ -28,7 +28,8 @@ def test_build_writes_everything(monkeypatch, tmp_path, chinook_url):
 
 def test_step_by_step(monkeypatch, tmp_path, library_url):
     model, city = tmp_path / "model.json", tmp_path / "city.json"
-    run(monkeypatch, "inspect", library_url, "-o", str(model))
+    run(monkeypatch, "inspect", library_url, "-o", str(model), "--sample", "2")
+    assert '"sample"' in model.read_text()
     run(monkeypatch, "layout", str(model), "-o", str(city), "--png", str(tmp_path / "city.png"))
     run(monkeypatch, "schem", str(model), str(city), "-o", str(tmp_path / "library.schem"))
     run(monkeypatch, "world", str(model), str(city), "-o", str(tmp_path / "world"), "--name", "Library")

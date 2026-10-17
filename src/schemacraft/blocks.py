@@ -36,6 +36,7 @@ ROOFS = [  # one per schema
     "minecraft:red_terracotta", "minecraft:purple_terracotta",
 ]
 SIGN_LINE = 15  # characters that fit on one sign line
+PAGE_LINES, PAGE_LINE = 14, 19  # lines on a book page, characters on one line (about)
 
 
 class Blocks:
@@ -63,6 +64,19 @@ class Blocks:
 
     def set(self, x, y, z, state: str) -> None:
         self.fill(x, y, z, x, y, z, state)
+
+    def lectern(self, x, y, z, title: str, pages: list[dict]) -> None:
+        """Lectern holding a written book; pages are text components."""
+        self.set(x, y, z, "minecraft:lectern[facing=south,has_book=true]")
+        self.entities[(x >> 4, z >> 4)].append({
+            "id": "minecraft:lectern", "x": x, "y": y, "z": z, "Page": 0,
+            "Book": {"id": "minecraft:written_book", "count": 1, "components": {
+                "minecraft:written_book_content": {
+                    "title": {"raw": title[:32]}, "author": "schemacraft", "resolved": True,
+                    "pages": [{"raw": json.dumps(p)} for p in pages],
+                },
+            }},
+        })
 
     def sign(self, x, y, z, facing: str | None, lines: list[str]) -> None:
         """Wall sign facing a direction, or a standing sign when facing is None."""
@@ -177,6 +191,35 @@ def _building(blocks: Blocks, b: dict, table: dict, roof: str, doors: set) -> No
         blocks.sign(x + dx, y0 + 2, z + dz, facing, _title(b, table))
 
     _column_signs(blocks, table, x0, z0, x1, z1, levels, doors)
+    if table.get("sample"):
+        names = [c["name"] for c in table["columns"]]
+        rows = table["sample"]
+        blocks.lectern(cx, y0, cz, table["name"], [_page(names, r, i, len(rows)) for i, r in enumerate(rows)])
+
+
+def _page(names: list[str], row: list[str], i: int, total: int) -> dict:
+    """One sample row on one book page: grey column names, black values, cut to fit."""
+    shown = names if len(names) < PAGE_LINES else names[:PAGE_LINES - 2]
+    # every column gets a line; the lines left over go first to the values that miss the fewest
+    need = [-(-(len(name) + 2 + len(value)) // PAGE_LINE) for name, value in zip(shown, row)]
+    lines = [1] * len(shown)
+    spare = PAGE_LINES - 1 - len(shown) - (len(shown) < len(names))
+    for j in sorted(range(len(shown)), key=lambda j: (need[j], j)):
+        more = min(need[j] - 1, spare)
+        lines[j] += more
+        spare -= more
+    extra = [{"text": f"Row {i + 1} of {total}\n", "bold": True}]
+    for name, value, n in zip(shown, row, lines):
+        label, budget = f"{name}: ", n * PAGE_LINE
+        if len(label) + len(value) > budget:  # cut the line to its budget, the name too if it must
+            if len(label) >= budget - 1:
+                label, value = label[:budget - 1] + "…", ""
+            else:
+                value = value[:budget - len(label) - 1] + "…"
+        extra += [{"text": label, "color": "dark_gray"}, {"text": value + "\n", "color": "black"}]
+    if len(shown) < len(names):
+        extra.append({"text": f"+{len(names) - len(shown)} more", "italic": True})
+    return {"text": "", "extra": extra}
 
 
 def _title(b, table) -> list[str]:

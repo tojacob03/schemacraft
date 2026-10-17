@@ -64,6 +64,15 @@ def test_views(library_url):
     assert [c["name"] for c in view["columns"]] == ["book_id", "stars"]
 
 
+def test_sample_rows_only_on_request(model, chinook_url, library_url):
+    assert all("sample" not in t for t in model["tables"])  # no real data unless asked for
+    track = by_name(introspect(chinook_url, sample=2))["Track"]
+    assert len(track["sample"]) == 2 and len(track["sample"][0]) == len(track["columns"])
+    assert track["sample"][0][1] == "For Those About To Rock (We Salute You)"
+    authors = by_name(introspect(library_url, sample=5))["author"]["sample"]
+    assert [r[2] for r in authors] == ["bio", "NULL", "NULL", "NULL", "NULL"]
+
+
 def test_indexes_present(model):
     track_ix = {tuple(ix["columns"]) for ix in by_name(model)["Track"]["indexes"]}
     assert ("AlbumId",) in track_ix
