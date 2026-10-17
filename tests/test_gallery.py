@@ -179,3 +179,14 @@ def test_buttons_switch_every_frame_to_the_maps_of_their_view(tmp_path):
             map_id = int(command.rsplit(" ", 1)[1])
             assert tag in frames
             assert map_id // (WALL_W * WALL_H) == k, "a button shows the maps of its own view"
+
+
+def test_walls_stay_closed_except_the_entrance_and_the_room_is_lit():
+    blocks, (sx, _, _), _, _ = build_gallery(SPEC)
+    x1, z1 = 2 + STEP * len(SPEC["exhibits"]) + 1, WALL_Z + DEPTH
+    south = blocks.raster(blocks.sequence, 0, BASE_Y, z1, x1 + 1, 4, 1)[:, 0, :]  # [y, x]
+    names = np.vectorize(lambda i: blocks.states[i])(south)
+    openings = sorted({x for y, x in zip(*np.nonzero(names != "minecraft:white_concrete"))})
+    assert openings == [sx - 1, sx, sx + 1], "only the entrance may be open"
+    inside = blocks.raster(blocks.sequence, 1, BASE_Y + 3, WALL_Z + 1, x1 - 1, 1, DEPTH - 1)
+    assert (np.vectorize(lambda i: blocks.states[i].startswith("minecraft:light"))(inside)).sum() >= len(SPEC["exhibits"]) * 2

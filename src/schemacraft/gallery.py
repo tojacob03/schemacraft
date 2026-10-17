@@ -53,6 +53,8 @@ def build_gallery(spec: dict) -> tuple[Blocks, tuple[int, int, int], float, list
     for x in range(3, x1 - 1, 4):
         for z in range(WALL_Z + 3, z1 - 1, 4):
             blocks.set(x, CEILING, z, LIGHT)
+            if z + 2 < z1:  # invisible light at eye height: the lamps are 9 blocks up
+                blocks.set(x, BASE_Y + 3, z + 2, "minecraft:light[level=15]")
     door = x1 // 2  # entrance in the middle of the south wall
     blocks.fill(door - 1, BASE_Y, z1, door + 1, BASE_Y + 3, z1, "minecraft:air")
 
@@ -74,7 +76,7 @@ def build_gallery(spec: dict) -> tuple[Blocks, tuple[int, int, int], float, list
             frame(blocks, left + col, BASE_Y + WALL_H - row, WALL_Z + 1, map_id, tags=[f"sc_e{i}_{col}_{row}"])
 
         centre, room = left + WALL_W / 2, WALL_W + 2  # text may use the wall and one block either side
-        text(blocks, centre, BASE_Y + WALL_H + 2.4, WALL_Z + 1.1, f"{i + 1}. {ex['question']}", 1.2, "#555555", room)
+        text(blocks, centre, BASE_Y + WALL_H + 2.4, WALL_Z + 1.1, f"{i + 1}. {ex['question']}", 1.2, "#2b2b2b", room)
         text(blocks, centre, BASE_Y + WALL_H + 1.2, WALL_Z + 1.1, ex["answer"], 1.6, "#1d5fa8", room, bold=True)
         if ex.get("note"):
             text(blocks, centre, BASE_Y + 0.2, WALL_Z + 1.1, ex["note"], 0.6, "#777777", room)
@@ -137,13 +139,17 @@ def frame(blocks: Blocks, x: int, y: int, z: int, map_id: int, facing: str = "so
     blocks.mobs[_chunk(x, z)].append(entity)
 
 
-def text(blocks: Blocks, x: float, y: float, z: float, text: str, scale: float, colour: str, width: float,
-         bold=False, facing: str = "south", billboard: str = "fixed") -> None:
+def text(blocks: Blocks, x: float, y: float, z: float, text, scale: float, colour: str, width: float,
+         bold=False, facing: str = "south", billboard: str = "fixed", background: int = 0) -> None:
     """Floating text, fully lit, wrapped to `width` blocks.
 
     Fixed text stands upright and is read by someone looking against `facing`; "vertical" text
     turns to face the player, which only suits open air where it cannot swing into a wall.
+    background is an ARGB colour for a plate behind the text, e.g. 0xB0000000 for translucent
+    black, which keeps text readable against a bright sky. text is a string, or a list of text
+    components such as [{"text": "won "}, {"text": "57.8 %", "color": "gold"}] for mixed colours.
     """
+    content = {"text": text} if isinstance(text, str) else {"text": "", "extra": text}
     s = Float(scale)
     blocks.mobs[_chunk(x, z)].append(Compound({
         "id": String("minecraft:text_display"),
@@ -151,10 +157,10 @@ def text(blocks: Blocks, x: float, y: float, z: float, text: str, scale: float, 
         "Pos": List[Double]([Double(x), Double(y), Double(z)]),
         "Motion": List[Double]([Double(0), Double(0), Double(0)]),
         "Rotation": List[Float]([Float(YAW[facing]), Float(0)]),
-        "text": String(json.dumps({"text": text, "color": colour, "bold": bold})),
+        "text": String(json.dumps({**content, "color": colour, "bold": bold})),
         "billboard": String(billboard),
         "line_width": Int(int(width / (TEXT_PIXEL * scale))),
-        "background": Int(0x00000000),
+        "background": Int(background - (1 << 32) if background >= 1 << 31 else background),
         "shadow": Byte(0), "see_through": Byte(0), "alignment": String("center"),
         "brightness": Compound({"block": Int(15), "sky": Int(15)}),
         "transformation": Compound({
